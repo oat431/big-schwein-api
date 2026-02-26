@@ -1,0 +1,41 @@
+# --- Go Binaries & Build Outputs ---
+/bin/
+/dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# --- Dependency Directories ---
+vendor/
+
+# --- Environment Variables ---
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+# keep .env.example for reference, but ignore any actual .env files
+!.env.example
+
+# --- Jetbrains IDE ---
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# --- VS Code ---
+.vscode/
+
+# --- OS Specific Files ---
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# --- Logs ---
+*.log
+logs/
