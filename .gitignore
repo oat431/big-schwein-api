@@ -39,3 +39,6 @@ Desktop.ini
 # --- Logs ---
 *.log
 logs/
+
+# --- Misc ---
+.agents
