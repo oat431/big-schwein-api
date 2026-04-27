@@ -1,6 +1,7 @@
 package main
 
 import (
+	"oat431/big-shwein-api/internal/bootstrap"
 	"oat431/big-shwein-api/internal/config"
 	"oat431/big-shwein-api/internal/route"
 	"os"
@@ -11,11 +12,19 @@ import (
 
 func main() {
 	config.LoadEnvConfig()
+	db := config.StartDatabase()
+	defer db.Close()
+
+	apiContainer, err := bootstrap.NewAPIContainer(db)
+	if err != nil {
+		log.Fatal("Failed to initialize API container: ", err)
+	}
+
 	app := fiber.New()
-	route.SetupMainRoute(app)
+	route.SetupMainRoute(app, apiContainer)
 
 	port := os.Getenv("PORT")
-	err := app.Listen(":" + port)
+	err = app.Listen(":" + port)
 	if err != nil {
 		log.Fatal("Failed to start server: ", err)
 	}
