@@ -1,7 +1,7 @@
 APP_NAME=big-schwein-api
 ENTRY_POINT=./cmd/api
 
-run:
+start:
 	go run $(ENTRY_POINT)/main.go
 
 build:
