@@ -1,9 +1,8 @@
 package model
 
-import "oat431/big-shwein-api/pkg/common"
-
+// Auth represents a user authentication record.
 type Auth struct {
-	common.BaseEntity
+	BaseEntity
 
 	Username   string `db:"username" json:"username"`
 	Email      string `db:"email" json:"email"`

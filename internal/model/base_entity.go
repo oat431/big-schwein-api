@@ -1,4 +1,4 @@
-package common
+package model
 
 import (
 	"time"
@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// BaseEntity contains the common fields shared by all database entities.
 type BaseEntity struct {
 	ID        uuid.UUID  `db:"id" json:"id"`
 	CreatedAt time.Time  `db:"created_at" json:"created_at"`

@@ -2,27 +2,24 @@ package repository
 
 import (
 	"context"
+	"fmt"
 
 	"oat431/big-shwein-api/internal/model"
 
 	"github.com/jmoiron/sqlx"
 )
 
-type refreshTokenRepository struct {
+// RefreshTokenRepository is the PostgreSQL implementation for refresh token data access.
+type RefreshTokenRepository struct {
 	db *sqlx.DB
 }
 
-type RefreshTokenRepository interface {
-	Save(ctx context.Context, refreshToken model.RefreshToken) error
-	Revoke(ctx context.Context, token string) error
-	GetByToken(ctx context.Context, token string) (*model.RefreshToken, error)
+// NewRefreshTokenRepository creates a new RefreshTokenRepository backed by PostgreSQL.
+func NewRefreshTokenRepository(db *sqlx.DB) *RefreshTokenRepository {
+	return &RefreshTokenRepository{db: db}
 }
 
-func NewRefreshTokenRepository(db *sqlx.DB) RefreshTokenRepository {
-	return &refreshTokenRepository{db: db}
-}
-
-func (r *refreshTokenRepository) Save(ctx context.Context, refreshToken model.RefreshToken) error {
+func (r *RefreshTokenRepository) Save(ctx context.Context, refreshToken model.RefreshToken) error {
 	query := `INSERT INTO tb_refresh_tokens (
 				id, created_at, updated_at, deleted_at, auth_id, token, expires_at, revoked
 			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
@@ -35,21 +32,25 @@ func (r *refreshTokenRepository) Save(ctx context.Context, refreshToken model.Re
 		refreshToken.Token,
 		refreshToken.ExpiresAt,
 		refreshToken.Revoked)
-	return err
+	if err != nil {
+		return fmt.Errorf("save refresh token: %w", err)
+	}
+	return nil
 }
 
-func (r *refreshTokenRepository) Revoke(ctx context.Context, token string) error {
+func (r *RefreshTokenRepository) Revoke(ctx context.Context, token string) error {
 	query := `UPDATE tb_refresh_tokens SET revoked = true, updated_at = NOW() WHERE token = $1`
-	_, err := r.db.ExecContext(ctx, query, token)
-	return err
+	if _, err := r.db.ExecContext(ctx, query, token); err != nil {
+		return fmt.Errorf("revoke refresh token: %w", err)
+	}
+	return nil
 }
 
-func (r *refreshTokenRepository) GetByToken(ctx context.Context, token string) (*model.RefreshToken, error) {
+func (r *RefreshTokenRepository) GetByToken(ctx context.Context, token string) (*model.RefreshToken, error) {
 	query := `SELECT id, created_at, updated_at, deleted_at, auth_id, token, expires_at, revoked FROM tb_refresh_tokens WHERE token = $1 AND revoked = false AND deleted_at IS NULL`
 	var refreshToken model.RefreshToken
-	err := r.db.GetContext(ctx, &refreshToken, query, token)
-	if err != nil {
-		return nil, err
+	if err := r.db.GetContext(ctx, &refreshToken, query, token); err != nil {
+		return nil, fmt.Errorf("get refresh token: %w", err)
 	}
 	return &refreshToken, nil
 }

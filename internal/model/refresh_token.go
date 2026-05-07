@@ -3,13 +3,12 @@ package model
 import (
 	"time"
 
-	"oat431/big-shwein-api/pkg/common"
-
 	"github.com/google/uuid"
 )
 
+// RefreshToken represents a stored refresh token for session management.
 type RefreshToken struct {
-	common.BaseEntity
+	BaseEntity
 
 	AuthID uuid.UUID `db:"auth_id" json:"auth_id"`
 

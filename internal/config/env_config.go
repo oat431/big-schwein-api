@@ -5,10 +5,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func init() {
-	log.Info("Loading environment variables...")
-}
-
+// LoadEnvConfig loads environment variables from the .env.development file.
 func LoadEnvConfig() {
 	failedToLoadEnv := godotenv.Load(".env.development")
 	if failedToLoadEnv != nil {

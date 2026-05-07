@@ -6,13 +6,10 @@ import (
 	"oat431/big-shwein-api/internal/middleware"
 
 	"github.com/gofiber/fiber/v3"
-	"github.com/gofiber/fiber/v3/log"
 	"github.com/gofiber/fiber/v3/middleware/cors"
 )
 
-func init() {
-	log.Info("Initializing main route...")
-}
+// SetupMainRoute configures all application routes and middleware.
 func SetupMainRoute(app *fiber.App, apiContainer *bootstrap.APIContainer) {
 	app.Use(middleware.GlobalMiddleware)
 	app.Use(cors.New(config.InitCorsConfig()))
