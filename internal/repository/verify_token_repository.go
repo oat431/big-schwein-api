@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 
 	"oat431/big-shwein-api/internal/model"
 
@@ -9,21 +10,17 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type emailVerifyTokenRepository struct {
+// EmailVerifyTokenRepository is the PostgreSQL implementation for email verification token data access.
+type EmailVerifyTokenRepository struct {
 	db *sqlx.DB
 }
 
-type EmailVerifyTokenRepository interface {
-	Save(ctx context.Context, token model.EmailVerifyToken) error
-	FindByToken(ctx context.Context, token string) (*model.EmailVerifyToken, error)
-	DeleteByAuthID(ctx context.Context, authID uuid.UUID) error
+// NewEmailVerifyTokenRepository creates a new EmailVerifyTokenRepository backed by PostgreSQL.
+func NewEmailVerifyTokenRepository(db *sqlx.DB) *EmailVerifyTokenRepository {
+	return &EmailVerifyTokenRepository{db: db}
 }
 
-func NewEmailVerifyTokenRepository(db *sqlx.DB) EmailVerifyTokenRepository {
-	return &emailVerifyTokenRepository{db: db}
-}
-
-func (r *emailVerifyTokenRepository) Save(ctx context.Context, token model.EmailVerifyToken) error {
+func (r *EmailVerifyTokenRepository) Save(ctx context.Context, token model.EmailVerifyToken) error {
 	query := `INSERT INTO tb_verify_tokens (
 				id, created_at, updated_at, deleted_at, auth_id, token, expires_at
 			) VALUES ($1, $2, $3, $4, $5, $6, $7)`
@@ -36,23 +33,27 @@ func (r *emailVerifyTokenRepository) Save(ctx context.Context, token model.Email
 		token.Token,
 		token.ExpiresAt,
 	)
-	return err
+	if err != nil {
+		return fmt.Errorf("save email verify token: %w", err)
+	}
+	return nil
 }
 
-func (r *emailVerifyTokenRepository) FindByToken(ctx context.Context, token string) (*model.EmailVerifyToken, error) {
+func (r *EmailVerifyTokenRepository) FindByToken(ctx context.Context, token string) (*model.EmailVerifyToken, error) {
 	query := `SELECT id, created_at, updated_at, deleted_at, auth_id, token, expires_at
 			  FROM tb_verify_tokens
 			  WHERE token = $1 AND deleted_at IS NULL`
 	var result model.EmailVerifyToken
-	err := r.db.GetContext(ctx, &result, query, token)
-	if err != nil {
-		return nil, err
+	if err := r.db.GetContext(ctx, &result, query, token); err != nil {
+		return nil, fmt.Errorf("find email verify token: %w", err)
 	}
 	return &result, nil
 }
 
-func (r *emailVerifyTokenRepository) DeleteByAuthID(ctx context.Context, authID uuid.UUID) error {
+func (r *EmailVerifyTokenRepository) DeleteByAuthID(ctx context.Context, authID uuid.UUID) error {
 	query := `DELETE FROM tb_verify_tokens WHERE auth_id = $1`
-	_, err := r.db.ExecContext(ctx, query, authID)
-	return err
+	if _, err := r.db.ExecContext(ctx, query, authID); err != nil {
+		return fmt.Errorf("delete verify tokens for auth %s: %w", authID, err)
+	}
+	return nil
 }

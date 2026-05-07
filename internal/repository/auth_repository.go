@@ -2,34 +2,27 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"oat431/big-shwein-api/internal/model"
 	"oat431/big-shwein-api/internal/payload/request"
-	"oat431/big-shwein-api/pkg/common"
 
-	"github.com/gofiber/fiber/v3/log"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
-type authRepository struct {
+// AuthRepository is the PostgreSQL implementation for auth data access.
+type AuthRepository struct {
 	db *sqlx.DB
 }
 
-type AuthRepository interface {
-	Register(ctx context.Context, request request.RegisterRequest) (*model.Auth, error)
-	GetAuthByUsername(ctx context.Context, username string) (*model.Auth, error)
-	GetAuthByID(ctx context.Context, id uuid.UUID) (*model.Auth, error)
-	GetAuthByEmail(ctx context.Context, email string) (*model.Auth, error)
-	MarkAsVerified(ctx context.Context, authID uuid.UUID) error
+// NewAuthRepository creates a new AuthRepository backed by PostgreSQL.
+func NewAuthRepository(db *sqlx.DB) *AuthRepository {
+	return &AuthRepository{db: db}
 }
 
-func NewAuthRepository(db *sqlx.DB) AuthRepository {
-	return &authRepository{db: db}
-}
-
-func (r *authRepository) Register(ctx context.Context, request request.RegisterRequest) (*model.Auth, error) {
+func (r *AuthRepository) Register(ctx context.Context, request request.RegisterRequest) (*model.Auth, error) {
 	query := `INSERT INTO tb_auth (
 				id,
 				created_at,
@@ -44,10 +37,10 @@ func (r *authRepository) Register(ctx context.Context, request request.RegisterR
 	currentTime := time.Now()
 	_, err := r.db.ExecContext(ctx, query, id, currentTime, currentTime, nil, request.Username, request.Email, request.Password, false)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("register auth: %w", err)
 	}
 	return &model.Auth{
-		BaseEntity: common.BaseEntity{
+		BaseEntity: model.BaseEntity{
 			ID:        id,
 			CreatedAt: currentTime,
 			UpdatedAt: currentTime,
@@ -60,7 +53,7 @@ func (r *authRepository) Register(ctx context.Context, request request.RegisterR
 	}, nil
 }
 
-func (r *authRepository) GetAuthByUsername(ctx context.Context, username string) (*model.Auth, error) {
+func (r *AuthRepository) GetAuthByUsername(ctx context.Context, username string) (*model.Auth, error) {
 	query := `
 		SELECT
 			id,
@@ -76,15 +69,13 @@ func (r *authRepository) GetAuthByUsername(ctx context.Context, username string)
 		WHERE
 			username = $1`
 	var auth model.Auth
-	err := r.db.GetContext(ctx, &auth, query, username)
-	if err != nil {
-		log.Error(err.Error())
-		return nil, err
+	if err := r.db.GetContext(ctx, &auth, query, username); err != nil {
+		return nil, fmt.Errorf("get auth by username %q: %w", username, err)
 	}
 	return &auth, nil
 }
 
-func (r *authRepository) GetAuthByID(ctx context.Context, id uuid.UUID) (*model.Auth, error) {
+func (r *AuthRepository) GetAuthByID(ctx context.Context, id uuid.UUID) (*model.Auth, error) {
 	query := `
 		SELECT
 			id,
@@ -100,15 +91,13 @@ func (r *authRepository) GetAuthByID(ctx context.Context, id uuid.UUID) (*model.
 		WHERE
 			id = $1`
 	var auth model.Auth
-	err := r.db.GetContext(ctx, &auth, query, id)
-	if err != nil {
-		log.Error(err.Error())
-		return nil, err
+	if err := r.db.GetContext(ctx, &auth, query, id); err != nil {
+		return nil, fmt.Errorf("get auth by id %s: %w", id, err)
 	}
 	return &auth, nil
 }
 
-func (r *authRepository) GetAuthByEmail(ctx context.Context, email string) (*model.Auth, error) {
+func (r *AuthRepository) GetAuthByEmail(ctx context.Context, email string) (*model.Auth, error) {
 	query := `
 		SELECT
 			id,
@@ -124,16 +113,16 @@ func (r *authRepository) GetAuthByEmail(ctx context.Context, email string) (*mod
 		WHERE
 			email = $1`
 	var auth model.Auth
-	err := r.db.GetContext(ctx, &auth, query, email)
-	if err != nil {
-		log.Error(err.Error())
-		return nil, err
+	if err := r.db.GetContext(ctx, &auth, query, email); err != nil {
+		return nil, fmt.Errorf("get auth by email %q: %w", email, err)
 	}
 	return &auth, nil
 }
 
-func (r *authRepository) MarkAsVerified(ctx context.Context, authID uuid.UUID) error {
+func (r *AuthRepository) MarkAsVerified(ctx context.Context, authID uuid.UUID) error {
 	query := `UPDATE tb_auth SET is_verified = true, updated_at = NOW() WHERE id = $1`
-	_, err := r.db.ExecContext(ctx, query, authID)
-	return err
+	if _, err := r.db.ExecContext(ctx, query, authID); err != nil {
+		return fmt.Errorf("mark auth %s as verified: %w", authID, err)
+	}
+	return nil
 }

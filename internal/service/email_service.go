@@ -7,21 +7,24 @@ import (
 	"oat431/big-shwein-api/internal/config"
 )
 
+// SMTPService sends emails via SMTP.
 type SMTPService struct {
-	config *config.Config
+	config *config.SMTPConfig
 }
 
-func NewSMTPService(cfg *config.Config) *SMTPService {
+// NewSMTPService creates a new SMTPService with the given configuration.
+func NewSMTPService(cfg *config.SMTPConfig) *SMTPService {
 	return &SMTPService{config: cfg}
 }
 
+// SendVerificationEmail sends an account verification email to the given address.
 func (s *SMTPService) SendVerificationEmail(to, token string) error {
 	subject := "Subject: Big Schwein Account Verification\n"
 	body := fmt.Sprintf(`
 		If you are receiving this email, your account has been successfully created.
-		Please verify your email address by clicking this link: http://localhost:3000/verify-email?token=%s
+		Please verify your email address by clicking this link: %s?token=%s
 		Thank you for joining Big Schwein!
-	`, token)
+	`, s.config.VerifyEmailBaseURL, token)
 
 	message := []byte(subject + "\n" + body)
 

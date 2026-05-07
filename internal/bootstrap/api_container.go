@@ -10,10 +10,12 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+// APIContainer holds all controller instances for dependency injection.
 type APIContainer struct {
 	AuthController *controller.AuthController
 }
 
+// NewAPIContainer wires all dependencies and returns a fully initialized APIContainer.
 func NewAPIContainer(db *sqlx.DB) (*APIContainer, error) {
 	log.Info("registering repositories")
 	authRepository := repository.NewAuthRepository(db)
@@ -21,8 +23,15 @@ func NewAPIContainer(db *sqlx.DB) (*APIContainer, error) {
 	emailVerifyTokenRepository := repository.NewEmailVerifyTokenRepository(db)
 
 	log.Info("registering services")
-	smtpService := service.NewSMTPService(config.GetEmailConfig())
-	authService, err := service.NewAuthService(authRepository, refreshTokenRepository, emailVerifyTokenRepository, smtpService)
+	smtpService := service.NewSMTPService(config.GetSMTPConfig())
+	tokenConfig := config.GetTokenConfig()
+	authService, err := service.NewAuthService(
+		authRepository,
+		refreshTokenRepository,
+		emailVerifyTokenRepository,
+		smtpService,
+		tokenConfig,
+	)
 	if err != nil {
 		return nil, err
 	}

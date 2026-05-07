@@ -2,13 +2,10 @@ package route
 
 import (
 	"github.com/gofiber/fiber/v3"
-	"github.com/gofiber/fiber/v3/log"
 	"github.com/gofiber/fiber/v3/middleware/healthcheck"
 )
 
-func init() {
-	log.Info("healthcheck api initialized: /api/v1/health")
-}
+// RegisterHealthCheckRoute sets up the /health endpoint.
 func RegisterHealthCheckRoute(router fiber.Router) {
 	route := router.Group("/health")
 
